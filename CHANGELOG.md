@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.1](https://github.com/nzbdav/nzbdav/compare/v0.8.0...v0.8.1) (2026-07-20)
+
+
+### Documentation
+
+* add since-version pills for 0.8.0 features ([075a0ac](https://github.com/nzbdav/nzbdav/commit/075a0ac9b4f0f19bd9ceca8b92d5faef1c188cdd))
+* show when features shipped with since-version pills ([3764bd9](https://github.com/nzbdav/nzbdav/commit/3764bd916f7e59090320e52b9c5520304c2ff1ec))
+
 ## [0.8.0](https://github.com/nzbdav/nzbdav/compare/v0.7.25...v0.8.0) (2026-07-20)
 
 
