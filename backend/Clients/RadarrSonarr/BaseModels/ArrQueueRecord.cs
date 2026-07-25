@@ -10,6 +10,15 @@ public class ArrQueueRecord
     [JsonPropertyName("title")]
     public string? Title { get; set; }
 
+    /// <summary>
+    /// Identifies the download this record belongs to. Sonarr emits one queue record
+    /// per episode of a season pack, and every one of them carries the same
+    /// download-id, so this is what identifies a release rather than <see cref="Id"/>.
+    /// Null for queue records that have no download behind them (pending releases).
+    /// </summary>
+    [JsonPropertyName("downloadId")]
+    public string? DownloadId { get; set; }
+
     [JsonPropertyName("protocol")]
     public string? Protocol { get; set; }
 
