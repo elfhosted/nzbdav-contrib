@@ -55,10 +55,19 @@ public class DatabaseBackupTask(
                     "main database").ConfigureAwait(false);
             }
 
-            await DumpIfExistsAsync(
-                MetricsDbContext.DatabaseFilePath,
-                Path.Join(stagingPath, DatabaseBackupStore.MetricsSqlName),
-                "metrics database").ConfigureAwait(false);
+            // The metrics database is deliberately NOT backed up. It holds nothing
+            // but telemetry (raw fetch events, read sessions and their rollups),
+            // every row of which the app regenerates from normal operation, and
+            // MetricsRetentionService already ages all of it out on its own TTLs.
+            // Dumping it was pure cost: on a busy install metrics.sql is well over
+            // 90% of a backup (10.5 GB of a 10.6 GB backup has been observed in
+            // production), and with a default retention of five backups that turns
+            // one throwaway database into a five-fold multiplier that fills the
+            // backup volume and starves the dumps that actually matter.
+            //
+            // Backups written before this change are not left half-migrated:
+            // DatabaseBackupStore.EnsureInitialized reclaims their metrics.sql, and
+            // the restore path only ever imports that file when it is present.
 
             var wardenPath = Path.Join(DavDatabaseContext.ConfigPath, "warden.db");
             await DumpIfExistsAsync(

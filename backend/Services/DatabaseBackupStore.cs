@@ -31,6 +31,7 @@ public sealed class DatabaseBackupStore
     {
         Directory.CreateDirectory(BackupsRoot);
         CleanupTempFolders();
+        ReclaimMetricsDumps();
     }
 
     public IReadOnlyList<DatabaseBackupManifest> List()
@@ -288,6 +289,61 @@ public sealed class DatabaseBackupStore
         {
             File.WriteAllText(temp, json);
             File.Move(temp, path, overwrite: true);
+        }
+    }
+
+    /// <summary>
+    /// Deletes metrics.sql from backups taken before metrics dumps were dropped
+    /// from the backup set, and rewrites their manifests to match.
+    ///
+    /// Suppressing new dumps alone does not reclaim anything: the old ones sit on
+    /// the backup volume until retention rotates them out, which on a daily
+    /// schedule takes as many days as the retention count, and an install whose
+    /// backup volume is already full by exactly this cause cannot complete the
+    /// backups that would do the rotating. So the space has to be given back
+    /// directly.
+    ///
+    /// Only regenerable telemetry is removed. db.sql and warden.sql are untouched,
+    /// so every backup stays restorable; the restore path imports metrics.sql only
+    /// when present and requires db.sql, never metrics.
+    /// </summary>
+    private void ReclaimMetricsDumps()
+    {
+        if (!Directory.Exists(BackupsRoot))
+            return;
+
+        foreach (var dir in Directory.EnumerateDirectories(BackupsRoot))
+        {
+            var name = Path.GetFileName(dir);
+            if (name.StartsWith(".tmp-", StringComparison.Ordinal))
+                continue;
+
+            var metricsPath = Path.Combine(dir, MetricsSqlName);
+            if (!File.Exists(metricsPath))
+                continue;
+
+            try
+            {
+                var reclaimedBytes = new FileInfo(metricsPath).Length;
+                File.Delete(metricsPath);
+
+                // Best-effort: a backup with no readable manifest is already
+                // skipped by List(), and the dump is gone either way.
+                var manifest = ReadManifest(name);
+                if (manifest is not null &&
+                    manifest.Files.RemoveAll(x => string.Equals(x.Name, MetricsSqlName, StringComparison.Ordinal)) > 0)
+                {
+                    WriteManifestAtomic(dir, manifest);
+                }
+
+                Log.Information(
+                    "Reclaimed {Bytes} bytes by dropping the metrics dump from database backup {BackupId}",
+                    reclaimedBytes, name);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to drop the metrics dump from database backup {BackupId}", name);
+            }
         }
     }
 

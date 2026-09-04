@@ -419,7 +419,7 @@ export function BackupSettings({ config, setNewConfig }: BackupSettingsProps) {
               <Tooltip
                 placement="bottom"
                 className="tooltip-start"
-                content="Writes a logical .sql dump of all databases under the config volume once per day."
+                content="Writes a logical .sql dump of the databases under the config volume once per day."
               >
                 <Toggle
                   id="backup-schedule-enabled"
@@ -780,19 +780,19 @@ export function BackupSettings({ config, setNewConfig }: BackupSettingsProps) {
             {mainDatabaseProvider === "postgres" ? (
               <>
                 Backups include only the local{" "}
-                <code className="font-mono text-base-content/70">metrics.sqlite</code> and{" "}
-                <code className="font-mono text-base-content/70">warden.db</code> databases as
-                logical SQL dumps. The PostgreSQL main database is externally managed and is not
+                <code className="font-mono text-base-content/70">warden.db</code> database as a
+                logical SQL dump. The PostgreSQL main database is externally managed and is not
                 included.{" "}
               </>
             ) : (
               <>
-                Backups include <code className="font-mono text-base-content/70">db.sqlite</code>,{" "}
-                <code className="font-mono text-base-content/70">metrics.sqlite</code>, and{" "}
-                <code className="font-mono text-base-content/70">warden.db</code> as logical SQL
+                Backups include <code className="font-mono text-base-content/70">db.sqlite</code>{" "}
+                and <code className="font-mono text-base-content/70">warden.db</code> as logical SQL
                 dumps.{" "}
               </>
             )}
+            <code className="font-mono text-base-content/70">metrics.sqlite</code> is not included:
+            it holds only telemetry, which is regenerated as you use the app.{" "}
             <code className="font-mono text-base-content/70">blobs/</code> folder is not included —
             restoring an older dump may leave some items with missing blob files.
           </p>
